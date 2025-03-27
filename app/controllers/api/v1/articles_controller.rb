@@ -1,10 +1,13 @@
-module api
-  module v1
+module Api
+  module V1
     class ArticlesController < ApplicationController
       def create
-        @article = Article.new(article_params)
-
-        render json: @article
+        @article = Article.new(article_params.merge(user_id: current_user.id))
+        if @article.save
+          render json: {message: "Article successfully created.", data: @article}
+        else
+          render json: {message: "Article could not be created.", data: @article}
+        end
       end
 
       def index
@@ -21,12 +24,11 @@ module api
 
       def update
         @article = Article.find(params[:id])
-
-        Article.transaction do
-          @article.update!(article_params)
+        if @article.update!(article_params)
+          render json: {message: "Article successfully updated.", data: @article}
+        else
+          render json: {message: "Article could not be updated.", data: @article}
         end
-
-        render json: @article
       end
 
       def destroy
@@ -39,7 +41,7 @@ module api
       private
 
       def article_params
-        params.permit(
+        params.require(:article).permit(
           title: params[:title],
           description: params[:description],
           content: params[:content],
