@@ -8,4 +8,8 @@ class User < ApplicationRecord
          :jwt_authenticatable, jwt_revocation_strategy: self
 
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "Must be a valid email address" }
+
+  def is_admin?
+    self.admin == true
+  end
 end

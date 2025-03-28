@@ -2,11 +2,13 @@ module Api
   module V1
     class ArticlesController < ApplicationController
       def create
+        return unless current_user.is_admin?
+
         @article = Article.new(article_params.merge(user_id: current_user.id))
         if @article.save
-          render json: {message: "Article successfully created.", data: @article}
+          render json: { message: "Article successfully created.", data: @article }
         else
-          render json: {message: "Article could not be created.", data: @article}
+          render json: { message: "Article could not be created.", data: @article }
         end
       end
 
@@ -23,29 +25,35 @@ module Api
       end
 
       def update
+        return unless current_user.is_admin?
+
         @article = Article.find(params[:id])
         if @article.update!(article_params)
-          render json: {message: "Article successfully updated.", data: @article}
+          render json: { message: "Article successfully updated.", data: @article }
         else
-          render json: {message: "Article could not be updated.", data: @article}
+          render json: { message: "Article could not be updated.", data: @article }, status: :unprocessable_entity
         end
       end
 
       def destroy
         @article = Article.find(params[:id])
-        @article.destroy
 
-        render json: @article
+        if current_user.is_admin?
+          @article.destroy
+          render json: { message: "Article successfully deleted.", data: @article }
+        else
+          render json: { message: "Admin rights needed to delete article.", data: @article }, status: :unprocessable_entity
+        end
       end
 
       private
 
       def article_params
         params.require(:article).permit(
-          title: params[:title],
-          description: params[:description],
-          content: params[:content],
-          author: params[:author]
+          :title,
+          :description,
+          :content,
+          :author
         )
       end
     end
